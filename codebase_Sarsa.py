@@ -36,18 +36,19 @@ def n_step(env, state, q_table, n, epsilon):
         next_state, reward, done, truncated, info = env.step(action)
         rewards.append(reward)
         acted_steps += 1
+        print(f"Step {i+1}: state={state}, action={action}, reward={reward}, next_state={next_state}") #added logging for each step
 
         if done:
             # Episode terminated early
             break
-        
+
         # If continuing, pick next action via epsilon greedy
         next_action = epsilon_greedy(next_state, q_table, epsilon)
-        
+
         # Store the new state & action
         states.append(next_state)
         actions.append(next_action)
-        
+
         # Move forward
         action = next_action
 
@@ -67,19 +68,25 @@ def sarsa(env, num_episode, gamma, alpha, init_epsilon, num_steps, init_q_value)
     tabular_q = np.full((num_states, num_actions), init_q_value, dtype=float)
 
     all_returns = []
+    MAX_EPISODE_STEPS = 10000  # Add maximum steps limit
 
     for episode in range(num_episode):
-        # Decide whether epsilon decays each episode or stays constant:
-        # For constant, just do:
-        epsilon = init_epsilon
-        
+        # Choose epsilon strategy (constant or decaying)
+        # Uncomment one of these lines:
+        epsilon = init_epsilon  # Constant epsilon
+        # epsilon = init_epsilon / (episode + 1)  # Decaying epsilon
+
         state, _ = env.reset()
         done = False
         episode_return = 0
+        episode_steps = 0
+
+        print(f"\nStarting Episode {episode+1} with epsilon {epsilon:.4f}")
 
         # 2) Keep sampling n-step segments until episode ends
-        while not done:
+        while not done and episode_steps < MAX_EPISODE_STEPS:
             states, actions, rewards, acted_steps = n_step(env, state, tabular_q, num_steps, epsilon)
+            episode_steps += acted_steps
 
             # 3) Compute the return G for these steps
             discount = 1.0
@@ -93,7 +100,7 @@ def sarsa(env, num_episode, gamma, alpha, init_epsilon, num_steps, init_q_value)
             a0 = actions[0]
             old_q = tabular_q[s0, a0]
 
-            # If we didn’t terminate early, we can bootstrap from the Q of the last (state, action)
+            # If we didn't terminate early, we can bootstrap from the Q of the last (state, action)
             if acted_steps == num_steps:
                 # states[-1] is the last new state appended
                 s_last = states[-1]
@@ -113,10 +120,16 @@ def sarsa(env, num_episode, gamma, alpha, init_epsilon, num_steps, init_q_value)
             # If the environment ended before reaching n steps
             if acted_steps < num_steps:
                 done = True
-        
-        # Store this episode’s total return
+
+        # Print episode summary
+        status = "completed" if done else "terminated due to step limit"
+        print(f"Episode {episode+1} {status} after {episode_steps} steps with return {episode_return}")
+
+        # Store this episode's total return
         all_returns.append(episode_return)
 
-    plot_return(all_returns, f'sarsa_alpha_{alpha}', all_returns[-1])
+    # Save plot with unique name based on parameters
+    plot_name = f'sarsa_alpha_{alpha}_eps_{init_epsilon}_nstep_{num_steps}'
+    plot_return(all_returns, plot_name, all_returns[-1])
     return tabular_q
     ############################
