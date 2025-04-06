@@ -17,4 +17,4 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python3 codebase_main.py -method sarsa -num_episode 2000 -alpha 0.1"
+args = "python3 codebase_main.py -method sarsa -num_episode 10 -alpha 0.1"

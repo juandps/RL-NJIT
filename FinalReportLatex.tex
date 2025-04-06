@@ -1,0 +1,174 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{geometry}
+\geometry{margin=1in}
+\title{DS 669 – Reinforcement Learning \\
+Programming Assignment 2 Report}
+\author{Juan Diego Palacio}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section*{Environment: Cliff Walking (10\%)}
+
+\subsection*{(a) Understanding CliffWalking Environment}
+
+\begin{enumerate}[label=(\arabic*)]
+    \item \textbf{Output Screenshot:} \\
+    \includegraphics[width=\textwidth]{1.1.png} % Replace with actual filename
+
+    \item \textbf{Initial State:} The initial state number is \texttt{36}, located at position \texttt{[3, 0]}.
+
+    \item \textbf{Action Meanings:}
+    \begin{itemize}
+        \item Action 0: Up
+        \item Action 1: Right
+        \item Action 2: Down
+        \item Action 3: Left
+    \end{itemize}
+
+    \item \textbf{Action 0 Result:} State reached: 24. Reward: -1.
+
+   \item \textbf{State Locations:}
+    \begin{itemize}
+        \item \textbf{State 0:} \\
+        Row = $0 \div 12 = 0$, \quad Column = $0 \mod 12 = 0$ \\
+        Therefore, Position = $[0, 0]$
+
+        \item \textbf{State 11:} \\
+        Row = $11 \div 12 = 0$, \quad Column = $11 \mod 12 = 11$ \\
+        Therefore, Position = $[0, 11]$
+
+        \item \textbf{State 47:} \\
+        Row = $47 \div 12 = 3$, \quad Column = $47 \mod 12 = 11$ \\
+        Therefore, Position = $[3, 11]$
+    \end{itemize}
+    \textbf{Note:} State number = row $\times$ 12 + column.\\
+    \textit{(The 4x12 gridworld comes from the official CliffWalking environment in OpenAI Gym.)}
+
+
+
+
+    \item \textbf{Action 1 Result:} State reached: 37. Reward: -1. Terminated: False.
+
+    \item \textbf{Actions 2 and 3 Results:} 
+    \begin{itemize}
+        \item Action 2 (Down): Invalid if at bottom; no transition.
+        \item Action 3 (Left): Falls off cliff → sent to state 36. Reward: -100.
+    \end{itemize}
+
+    \item \textbf{Transition/Reward Rule:} 
+    Moving to any non-terminal state: reward = -1. 
+    Entering cliff: reward = -100 and reset to start. 
+    Terminal state at [3, 11] ends episode.
+\end{enumerate}
+
+\subsection*{(b) Test Custom Actions}
+\begin{itemize}
+    \item \textbf{Test Move Screenshot:}
+    \includegraphics[width=\textwidth]{2.1.png}
+
+    \item \textbf{Observed Output:} 
+    The agent started at state 36 (bottom-left), then took 3 upward moves to reach state 0 (top-left), followed by multiple rightward actions that failed to change the state due to reaching the grid boundary. Total reward accumulated was \texttt{-14}.
+
+    \item \textbf{Max Total Reward:} 
+    Reaching the top-right corner (state 11) does not end the episode — it is not a terminal state. The maximum achievable total reward in a **successful episode** (that ends in the terminal state at bottom-right) is \texttt{-12}, which comes from taking 11 steps to the right and one step down while avoiding the cliff.
+\end{itemize}
+
+\subsection*{(c) Test Optimal Path}
+\begin{itemize}
+    \item \textbf{Screenshot:}
+    \includegraphics[width=\textwidth]{2.1.1.png}
+
+    \item \textbf{Optimal Path Description:} 
+    The agent moves safely from the starting point at the bottom-left corner by taking 2 steps up, then moves 11 steps to the right along the top row, and finally takes 2 steps down to reach the goal at the bottom-right corner. This path avoids the cliff entirely and results in a total reward of \texttt{-15}.
+\end{itemize}
+
+\newpage
+\section*{II. Temporal Difference (TD) Control (60\%)}
+
+\subsection*{(a) SARSA Implementation}
+\begin{itemize}
+    \item \textbf{Reward Plot:} 
+    \includegraphics[width=0.8\textwidth]{sarsa_rewards_plot.png}
+
+    \item \textbf{Policy Screenshot:}
+    \includegraphics[width=0.9\textwidth]{sarsa_policy_output.png}
+
+    \item \textbf{Questions:}
+    \begin{enumerate}
+        \item Yes, the Q-table converges gradually as returns stabilize.
+        \item Constant $\varepsilon$ reduces exploration over time, possibly getting stuck in suboptimal paths.
+        \item $\varepsilon$ should gradually decrease to balance exploration and exploitation.
+    \end{enumerate}
+\end{itemize}
+
+\subsection*{(b) SARSA with Decaying $\varepsilon$}
+\begin{itemize}
+    \item \textbf{Reward Plot:} 
+    \includegraphics[width=0.8\textwidth]{sarsa_decay_rewards.png}
+
+    \item \textbf{Policy Screenshot:}
+    \includegraphics[width=0.9\textwidth]{sarsa_decay_policy.png}
+
+    \item \textbf{Questions:}
+    \begin{enumerate}
+        \item Decaying $\varepsilon$ reduces exploration as the policy improves, aiding convergence.
+        \item Not necessarily optimal, but reward is typically higher than with constant $\varepsilon$.
+    \end{enumerate}
+\end{itemize}
+
+\subsection*{(c) n-step SARSA Effects}
+
+\textbf{Steve’s Results:}
+\begin{enumerate}
+    \item State-action (1,2) goes into cliff early; (17,1) too aggressive move.
+    \item Higher $n$ leads to better generalization, but slower convergence.
+    \item Total reward is higher with n = 10 or 100 vs. 1-step SARSA.
+    \item “Wrong” action in 10-step: state 36 chose right, fell off cliff. Possible overestimation due to distant reward estimate.
+\end{enumerate}
+
+\textbf{SARSA Fail Case:}
+\begin{itemize}
+    \item \textbf{Reward Plot:}
+    \includegraphics[width=0.8\textwidth]{sarsa_fail_plot.png}
+
+    \item \textbf{Policy Screenshot:}
+    \includegraphics[width=0.9\textwidth]{sarsa_fail_policy.png}
+
+    \item \textbf{Traps Identified:} State-action (44, 1) leads into cliff repeatedly.
+\end{itemize}
+
+\newpage
+\section*{III. Q-Learning (30\%)}
+
+\subsection*{(a) Implementation}
+\begin{itemize}
+    \item \textbf{Reward Plot:}
+    \includegraphics[width=0.8\textwidth]{q_learning_rewards.png}
+
+    \item \textbf{Policy Screenshot:}
+    \includegraphics[width=0.9\textwidth]{q_learning_policy.png}
+
+    \item \textbf{Questions:}
+    \begin{enumerate}
+        \item Q-learning converges faster than SARSA due to off-policy nature.
+        \item Reward usually higher than SARSA due to greedy exploitation.
+        \item Still not always the optimal reward, but very close.
+    \end{enumerate}
+\end{itemize}
+
+\subsection*{(b) Effect of Alpha $\alpha$}
+
+\textbf{Steve’s Test Results:}
+\begin{enumerate}
+    \item Larger $\alpha$ leads to faster learning but more variance.
+    \item $\alpha=0.9$ helps faster convergence than $\alpha=0.1$.
+    \item Large $\alpha$ can cause fluctuation after convergence.
+\end{enumerate}
+
+\end{document}
