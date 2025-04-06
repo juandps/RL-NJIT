@@ -18,9 +18,11 @@ def statistic_epsilon_analysis(collect_rewards):
     :param collect_rewards: the total rewards for multiple seeds
     :return: mean and standard deviation of the total rewards
     """
-    filtered_rewards = [r for r in collect_rewards if r > -100]
-    mean_r = statistics.mean(filtered_rewards)
-    std_r = statistics.stdev(filtered_rewards) if len(filtered_rewards) > 1 else 0
+    if not collect_rewards:
+        return 0, 0
+    # Use all rewards instead of filtering
+    mean_r = statistics.mean(collect_rewards)
+    std_r = statistics.stdev(collect_rewards) if len(collect_rewards) > 1 else 0
     return mean_r, std_r
 
 
