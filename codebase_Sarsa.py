@@ -71,22 +71,22 @@ def sarsa(env, num_episode, gamma, alpha, init_epsilon, num_steps, init_q_value)
     MAX_EPISODE_STEPS = 10000  # Add maximum steps limit
 
     for episode in range(num_episode):
-        # Choose epsilon strategy (constant or decaying)
-        # Uncomment one of these lines:
+        # Decide whether epsilon decays each episode or stays constant:
+        # For constant, just do:
         epsilon = init_epsilon  # Constant epsilon
         # epsilon = init_epsilon / (episode + 1)  # Decaying epsilon
 
         state, _ = env.reset()
         done = False
         episode_return = 0
-        episode_steps = 0
+        steps_this_episode = 0  # Track steps in this episode
+        max_episode_steps = 10000  # Maximum steps allowed
 
         print(f"\nStarting Episode {episode+1} with epsilon {epsilon:.4f}")
 
-        # 2) Keep sampling n-step segments until episode ends
-        while not done and episode_steps < MAX_EPISODE_STEPS:
+        # 2) Keep sampling n-step segments until episode ends or max steps reached
+        while not done and steps_this_episode < max_episode_steps:
             states, actions, rewards, acted_steps = n_step(env, state, tabular_q, num_steps, epsilon)
-            episode_steps += acted_steps
 
             # 3) Compute the return G for these steps
             discount = 1.0
@@ -121,9 +121,12 @@ def sarsa(env, num_episode, gamma, alpha, init_epsilon, num_steps, init_q_value)
             if acted_steps < num_steps:
                 done = True
 
+            # Update total steps for this episode
+            steps_this_episode += acted_steps
+
         # Print episode summary
-        status = "completed" if done else "terminated due to step limit"
-        print(f"Episode {episode+1} {status} after {episode_steps} steps with return {episode_return}")
+        status = "completed" if done else "terminated (max steps)"
+        print(f"Episode {episode+1} {status} after {steps_this_episode} steps with return {episode_return}")
 
         # Store this episode's total return
         all_returns.append(episode_return)
