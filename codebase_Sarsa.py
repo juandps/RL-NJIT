@@ -117,5 +117,6 @@ def sarsa(env, num_episode, gamma, alpha, init_epsilon, num_steps, init_q_value)
         # Store this episode’s total return
         all_returns.append(episode_return)
 
-    return tabular_q, all_returns
+    plot_return(all_returns, f'sarsa_alpha_{alpha}', all_returns[-1])
+    return tabular_q
     ############################
